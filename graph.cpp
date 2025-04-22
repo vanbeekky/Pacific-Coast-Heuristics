@@ -53,3 +53,32 @@ bool Graph::loadFromFiles(const std::string& nodeFile, const std::string& edgeFi
     ef.close();
     return true;
 }
+
+std::pair<double,int> Graph::dijkstra(int start, int goal) {
+    const double INF = std::numeric_limits<double>::infinity();
+    std::vector<double> dist(N, INF);
+    std::vector<char> visited(N, 0);
+    dist[start] = 0.0;
+    using NodePair = std::pair<double,int>;
+    std::priority_queue<NodePair, std::vector<NodePair>, std::greater<NodePair>> pq;
+    pq.emplace(0.0, start);
+    int explored = 0;
+    while(!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if(visited[u]) continue;
+        visited[u] = 1;
+        ++explored;
+        if(u == goal) return {d, explored};
+        for(const auto& e : adj[u]) {
+            int v = e.first;
+            double w = e.second;
+            if(visited[v]) continue;
+            double nd = d + w;
+            if(nd < dist[v]) {
+                dist[v] = nd;
+                pq.emplace(nd, v);
+            }
+        }
+    }
+    return {INF, explored};
+}
