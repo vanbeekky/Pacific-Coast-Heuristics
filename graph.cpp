@@ -82,3 +82,41 @@ std::pair<double,int> Graph::dijkstra(int start, int goal) {
     }
     return {INF, explored};
 }
+
+std::pair<double,int> Graph::astar(int start, int goal) {
+    if(!hasCoords) return dijkstra(start, goal);
+    const double INF = std::numeric_limits<double>::infinity();
+    std::vector<double> dist(N, INF);
+    std::vector<char> visited(N, 0);
+    auto heuristic = [&](int u) {
+        double dx = coords[u].first  - coords[goal].first;
+        double dy = coords[u].second - coords[goal].second;
+        return std::sqrt(dx*dx + dy*dy);
+    };
+    dist[start] = 0.0;
+    using State = std::tuple<double,double,int>;
+    struct Compare { bool operator()(State const& a, State const& b) const {
+        return std::get<0>(a) > std::get<0>(b);
+    }};
+    std::priority_queue<State, std::vector<State>, Compare> pq;
+    pq.emplace(heuristic(start), 0.0, start);
+    int explored = 0;
+    while(!pq.empty()) {
+        auto [f, g, u] = pq.top(); pq.pop();
+        if(visited[u]) continue;
+        visited[u] = 1;
+        ++explored;
+        if(u == goal) return {g, explored};
+        for(auto const& e : adj[u]) {
+            int v = e.first;
+            double w = e.second;
+            if(visited[v]) continue;
+            double ng = g + w;
+            if(ng < dist[v]) {
+                dist[v] = ng;
+                pq.emplace(ng + heuristic(v), ng, v);
+            }
+        }
+    }
+    return {INF, explored};
+}
